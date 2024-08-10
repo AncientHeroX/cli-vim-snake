@@ -1,99 +1,80 @@
-use std::{io::{stdout, Write}, ops::BitXor, thread::sleep, time::Duration, usize};
+mod snake;
+mod screen;
+mod apple;
+
+use screen::Screen;
+use snake::Snake;
+use std::{io::stdout, time::Duration, usize};
+use crossterm::{cursor:: MoveUp, event::{poll, read, Event, KeyCode}, terminal::{self, disable_raw_mode, enable_raw_mode, ClearType}, ExecutableCommand};
 
 
 const WIDTH: usize = 100;
 const HEIGHT: usize = 50;
 const BACKGROUND_CHAR: char = ' ';
 
-struct Screen {
-    height: usize,
-    width: usize,
-    canvas: Vec<Vec<char>>
-}
-impl Screen {
-    fn new (w: usize, h: usize) -> Screen {
-        Screen { width: w, height: h, canvas: vec![vec![BACKGROUND_CHAR; w]; h]}
-    }
-    fn draw(&mut self, x: i32, y: i32) {
-        if (x as usize) < self.width && (y as usize) < self.height {
-            self.canvas[y as usize][x as usize] = '0';
-        }
-    }
-
-    fn render(&mut self) {
-        for r in &self.canvas {
-            for c in r {
-                print!("{}", c);
-            }
-            print!("\n");
-            stdout().flush().unwrap();
-        }
-        print!("\x1B[{HEIGHT}A");
-        self.canvas = vec![vec![BACKGROUND_CHAR; self.width]; self.height];
-
-        sleep(Duration::from_millis(100));
-        stdout().flush().unwrap();
-    }
-}
-
-struct SnakeBody {
-    m_x: i32,
-    m_y: i32,
-}
-impl SnakeBody {
-    fn new (x: i32, y: i32) -> SnakeBody {
-        SnakeBody { m_x: x, m_y: y }
-    }
-}
-struct Snake {
-    body: Vec<SnakeBody>,
-    xdir: i32,
-    ydir: i32
-}
-
-impl Snake {
-    fn new(x: i32, y: i32) -> Snake{
-        Snake { 
-            body: vec![SnakeBody::new(x, y)],
-            xdir: 1,
-            ydir: 0
-        }
-    }
-    fn add_tail(&mut self) {
-        let head = &self.body[self.body.len() - 1];
-        let n_head = SnakeBody::new(head.m_x + &self.xdir, head.m_y + self.ydir);
-
-        self.body.push(n_head);
-    }
-    fn adjust(&mut self) {
-        self.add_tail();
-
-        self.body.remove(0);
-    }
-
-    fn draw(&mut self, s: &mut Screen) {
-        self.adjust();
-        for part in &self.body {
-            s.draw(part.m_x, part.m_y);
-        }
-    }
-}
 
 fn main() {
-    let mut screen = Screen::new(WIDTH, HEIGHT);
-    let mut snake = Snake::new(49, 24);
-    snake.xdir = 1;
-    snake.ydir = 0;
-    
-    snake.add_tail();
-    snake.add_tail();
-    snake.add_tail();
+    let mut screen = Screen::new(WIDTH, HEIGHT, BACKGROUND_CHAR);
+    let mut snake = Snake::new(49, 24, 8);
+    let mut apple = apple::Apple::new(HEIGHT, WIDTH);
+    let mut points = 0;
+    let clear = terminal::Clear;
+    snake.change_dir(1, 0);
 
     loop {
-        snake.xdir = snake.xdir ^ 1;
-        snake.ydir = snake.ydir ^ 1;
-        snake.draw(&mut screen);
+        println!("points: {}",points);
+        match snake.draw(&mut screen) {
+            Err(e) => {
+                println!("---- You lose!\n{e}");
+                break
+            },
+            _ => {},
+        }
+        match apple.draw(&mut screen) {
+            Err(e) => {
+                println!("{e}");
+                break
+            },
+            _ => {},
+        }
+
+        if apple.check_collision(snake.get_head()) {
+            apple.re_pos();
+            snake.add_tail();
+            points += 1;
+        };
         screen.render();
+
+        stdout().execute(MoveUp((HEIGHT as u16) + 1)).unwrap();
+
+
+        enable_raw_mode().unwrap();
+        if poll(Duration::from_millis(0)).unwrap() {
+            match read().unwrap() {
+                Event::Key(event) => {
+                    match event.code {
+                        KeyCode::Char(e) => {
+                            match e {
+                                'j' => snake.change_dir(0, 1),
+                                'k' => snake.change_dir(0, -1),
+                                'h' => snake.change_dir(-1, 0),
+                                'l' => snake.change_dir(1, 0),
+                                _ => ()
+                            }
+                        },
+                        KeyCode::Esc => { 
+                            disable_raw_mode().unwrap();
+                            break 
+                        },
+                        _ => ()
+                    }
+                },
+                _ => ()
+            }
+        }
+        disable_raw_mode().unwrap();
+        stdout().execute(clear(ClearType::FromCursorDown)).unwrap();
     }
+    disable_raw_mode().unwrap();
 }
 
