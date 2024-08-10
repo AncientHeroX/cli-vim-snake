@@ -1,4 +1,4 @@
-use std::{error::Error, io::{stdout, Write}, thread::sleep, time::Duration};
+use std::{io::{stdout, Write}, thread::sleep, time::Duration};
 
 pub struct Screen {
     background_char: char,

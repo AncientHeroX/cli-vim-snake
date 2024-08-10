@@ -1,6 +1,3 @@
-use std::error::Error;
-
-use rand::prelude;
 use super::snake::SnakeBody;
 use super::screen::Screen;
 
