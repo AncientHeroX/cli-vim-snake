@@ -49,7 +49,7 @@ fn main() {
 
 
         enable_raw_mode().unwrap();
-        if poll(Duration::from_millis(0)).unwrap() {
+        if poll(Duration::from_millis(100)).unwrap() {
             match read().unwrap() {
                 Event::Key(event) => {
                     match event.code {

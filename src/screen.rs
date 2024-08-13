@@ -28,6 +28,5 @@ impl Screen {
         }
 
         self.canvas = vec![vec![self.background_char; self.width]; self.height];
-        sleep(Duration::from_millis(100));
     }
 }
