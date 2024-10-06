@@ -1,17 +1,20 @@
-mod snake;
-mod screen;
 mod apple;
+mod screen;
+mod snake;
 
+use crossterm::{
+    cursor::MoveUp,
+    event::{poll, read, Event, KeyCode},
+    terminal::{self, disable_raw_mode, enable_raw_mode, ClearType},
+    ExecutableCommand,
+};
 use screen::Screen;
 use snake::Snake;
 use std::{io::stdout, time::Duration, usize};
-use crossterm::{cursor:: MoveUp, event::{poll, read, Event, KeyCode}, terminal::{self, disable_raw_mode, enable_raw_mode, ClearType}, ExecutableCommand};
-
 
 const WIDTH: usize = 100;
 const HEIGHT: usize = 50;
 const BACKGROUND_CHAR: char = ' ';
-
 
 fn main() {
     let mut screen = Screen::new(WIDTH, HEIGHT, BACKGROUND_CHAR);
@@ -22,20 +25,20 @@ fn main() {
     snake.change_dir(1, 0);
 
     loop {
-        println!("points: {}",points);
+        println!("points: {}", points);
         match snake.draw(&mut screen) {
             Err(e) => {
                 println!("---- You lose!\n{e}");
-                break
-            },
-            _ => {},
+                break;
+            }
+            _ => {}
         }
         match apple.draw(&mut screen) {
             Err(e) => {
                 println!("{e}");
-                break
-            },
-            _ => {},
+                break;
+            }
+            _ => {}
         }
 
         if apple.check_collision(snake.get_head()) {
@@ -47,29 +50,24 @@ fn main() {
 
         stdout().execute(MoveUp((HEIGHT as u16) + 1)).unwrap();
 
-
         enable_raw_mode().unwrap();
         if poll(Duration::from_millis(100)).unwrap() {
             match read().unwrap() {
-                Event::Key(event) => {
-                    match event.code {
-                        KeyCode::Char(e) => {
-                            match e {
-                                'j' => snake.change_dir(0, 1),
-                                'k' => snake.change_dir(0, -1),
-                                'h' => snake.change_dir(-1, 0),
-                                'l' => snake.change_dir(1, 0),
-                                _ => ()
-                            }
-                        },
-                        KeyCode::Esc => { 
-                            disable_raw_mode().unwrap();
-                            break 
-                        },
-                        _ => ()
+                Event::Key(event) => match event.code {
+                    KeyCode::Char(e) => match e {
+                        'j' => snake.change_dir(0, 1),
+                        'k' => snake.change_dir(0, -1),
+                        'h' => snake.change_dir(-1, 0),
+                        'l' => snake.change_dir(1, 0),
+                        _ => (),
+                    },
+                    KeyCode::Esc => {
+                        disable_raw_mode().unwrap();
+                        break;
                     }
+                    _ => (),
                 },
-                _ => ()
+                _ => (),
             }
         }
         disable_raw_mode().unwrap();
@@ -77,4 +75,3 @@ fn main() {
     }
     disable_raw_mode().unwrap();
 }
-

@@ -1,14 +1,19 @@
-use std::{io::{stdout, Write}, thread::sleep, time::Duration};
+use std::io::{stdout, Write};
 
 pub struct Screen {
     background_char: char,
     height: usize,
     width: usize,
-    canvas: Vec<Vec<char>>
+    canvas: Vec<Vec<char>>,
 }
 impl Screen {
-    pub fn new (w: usize, h: usize, b_char: char) -> Screen {
-        Screen { background_char: b_char, width: w, height: h, canvas: vec![vec![b_char; w]; h]}
+    pub fn new(w: usize, h: usize, b_char: char) -> Screen {
+        Screen {
+            background_char: b_char,
+            width: w,
+            height: h,
+            canvas: vec![vec![b_char; w]; h],
+        }
     }
     pub fn draw(&mut self, x: i32, y: i32, c: char) -> Result<(), String> {
         if (x as usize) < self.width && (y as usize) < self.height {
